@@ -19,5 +19,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/adarshkumar712/PPLM.jl",
+    repo="github.com/Adarshkumar712/PPLM.jl",
+    devbranch = "main",
 )

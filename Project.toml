@@ -3,6 +3,9 @@ uuid = "80fe3cd3-18f3-43a0-bc53-22e3608ca67d"
 authors = ["Adarsh Kumar"]
 version = "0.1.0"
 
+[deps]
+DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
+
 [compat]
 julia = "1.6"
 
