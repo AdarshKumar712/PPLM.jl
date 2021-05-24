@@ -8,7 +8,7 @@ julia:
 os:
   - linux
   - windows
-  - os
+  - osx
 arch:
   - x64
 cache:
@@ -18,10 +18,6 @@ matrix:
   allow_failures:
     - julia: nightly
   exclude:
-    - os: osx
-      julia: 1.6
-    - os: windows
-      julia: 1.6
     - os: osx
       julia: nightly
     - os: windows
