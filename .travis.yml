@@ -7,12 +7,23 @@ julia:
   - nightly
 os:
   - linux
+  - windows
+  - osx
 arch:
   - x64
 cache:
   directories:
     - ~/.julia/artifacts
-jobs:
-  fast_finish: true
+matrix:
   allow_failures:
     - julia: nightly
+  exclude:
+    - os: osx
+      julia: nightly
+    - os: windows
+      julia: nightly
+  fast_finish: true
+branches:
+  only:
+    - main
+    - /release-.*/
