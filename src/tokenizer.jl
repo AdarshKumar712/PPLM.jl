@@ -39,8 +39,11 @@ function tokenize(t::GPT2Tokenizer, text::AbstractString)
     t.bpe_encode(text)
 end
 
-function encode(t::GPT2Tokenizer, text::AbstractString)
+function encode(t::GPT2Tokenizer, text::AbstractString; add_prefix_space=false)
     tokens = tokenize(t, text)
+    if add_prefix_space==true
+        tokens = map(x-> string(" ", x), words)
+    end
     t.encoder(tokens)
 end
 
@@ -53,8 +56,8 @@ end
 
 Example: for vector of texts -> map(x->encode(tokenizer, x), text_vector) or tokenizer.(text_vector)
 """
-function (t::GPT2Tokenizer)(text::AbstractString)
-    encode(t, text)
+function (t::GPT2Tokenizer)(text::AbstractString; add_prefix_space=false)
+    encode(t, text; add_prefix_space=add_prefix_space)
 end
 
 decode(vocab::Vocabulary{T}, i::Int) where T = 0 <= i <= length(vocab) ? vocab.list[i] : vocab.unk
