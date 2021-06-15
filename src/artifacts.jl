@@ -1,3 +1,7 @@
+using Pkg.Artifacts
+
+const ARTIFACTS_TOML = joinpath(@__DIR__, "Artifacts.toml")
+
 function get_registered_file(name)
     global ARTIFACTS_TOML
     hash = artifact_hash(name, ARTIFACTS_TOML)
