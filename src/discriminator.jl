@@ -4,8 +4,18 @@ struct ClassifierHead
     class_size::Int
 end
 
-function ClassifierHead(class_size::Int=1, embed_size::Int=768)
-    layer = Dense(embed_size, class_size)
+function ClassifierHead(class_size::Int=1, embed_size::Int=768; load_from_pretrained=false, discrim=nothing)
+    if load_from_pretrained==true
+        if discrim==nothing
+            error("Discriminator not provided")
+        else
+            path = get_registered_file(discrim)
+            BSON.@load path config_metadata weights
+            layer = Dense(weights["weight"], weights["bias"])
+        end
+    else
+        layer = Dense(embed_size, class_size)
+    end
     ClassifierHead(layer, embed_size, class_size)
 end
 
@@ -72,8 +82,8 @@ function (m::DiscriminatorV2)(x, mask; args=nothing)
     logits
 end
 
-function getDiscriminator(model; version=2, class_size::Int=1, embed_size::Int=768)
-    cl_head = ClassifierHead(class_size, embed_size)
+function getDiscriminator(model; load_from_pretrained=false, discrim=nothing, version=2, class_size::Int=1, embed_size::Int=768)
+    cl_head = ClassifierHead(class_size, embed_size; load_from_pretrained=load_from_pretrained, discrim=discrim)
     if version == 1
         return DiscriminatorV1(cl_head, model, embed_size)
     else
@@ -81,5 +91,34 @@ function getDiscriminator(model; version=2, class_size::Int=1, embed_size::Int=7
     end
 end
 
-## TODO Load_classifier_head, load_discriminator, save_discriminator, save_classifier_head
+"""
 
+"""
+function save_classifier_head(cl_head; file_name="custom_classifier_head.bson", path="./pretrained_discriminators", args=nothing, register_discrim=true, discrim_name="")
+    save_path = joinpath(path, file_name)
+    config_metadata = args
+    weights = Dict("weight"=> cl_head.linear_layer.W, "bias"=>cl_head.linear_layer.bias)
+    if args==nothing
+        @warn "Saving classifier without Hyperparameter information"
+        config_metadata = Dict()
+        config_metadata["embed_size"]=size(weights["weight"])[2]
+        config_metadata["class_size"]=size(weights["weight"])[1]
+        config_metadata["path"] = save_path
+    end
+    BSON.@save save_path config_metadata weights
+    
+    if register_discrim==true
+        if discrim_name == ""
+            discrim_name=file_name
+        end
+        register_custom_file(discrim_name, file_name, path)
+    end
+end
+
+
+function save_discriminator(discrim; file_name="Custom_discrim.bson", path="./pretrained_discriminators", args=nothing, register_discrim=true, discrim_name="")
+    save_path = joinpath(path, file_name)
+    println("Saving classifier head weights for the discriminator to $save_path")
+    save_classifier_head(discrim.cl_head; file_name=file_name, path=path, args=args, register_discrim=register_discrim, discrim_name=discrim_name)
+    print("Discriminator saved successfully")
+end
