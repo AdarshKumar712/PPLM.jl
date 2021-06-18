@@ -1,3 +1,6 @@
+[clickbait]
+git-tree-sha1 = "cb2d9f920606a943bab261f43d032064c1075ad4"
+
 [legal]
 git-tree-sha1 = "31910cb9bc5fd2026f64692a3ca1b062be78c937"
 
@@ -18,6 +21,9 @@ git-tree-sha1 = "39cac44d1ed3681afbf834f222397bd3e5f037ae"
 
 [science]
 git-tree-sha1 = "9ed5cd23f4eff0f76f72f87e2a5141bb2995365a"
+
+[sentiment]
+git-tree-sha1 = "a6cfde2983d18ba4897d4b8b984ac826b5be0081"
 
 [space]
 git-tree-sha1 = "0aa7b97ed43f1ce20273091bdbb0ffc36b32c9b5"
