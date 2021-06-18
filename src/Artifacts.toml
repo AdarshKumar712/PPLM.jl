@@ -1,0 +1,26 @@
+[legal]
+git-tree-sha1 = "31910cb9bc5fd2026f64692a3ca1b062be78c937"
+
+[military]
+git-tree-sha1 = "df7a48a7780609d39e9cc9ceed6ac06019a884d7"
+
+[monsters]
+git-tree-sha1 = "d090ad6b9b74fcb4cd301ce8ccc847cf7cae4b04"
+
+[politics]
+git-tree-sha1 = "b284d97ab281a42dadd3a3f958934051ae859c3d"
+
+[positive_words]
+git-tree-sha1 = "e1002313a378f39215ac785cd82ef10d31c75383"
+
+[religion]
+git-tree-sha1 = "39cac44d1ed3681afbf834f222397bd3e5f037ae"
+
+[science]
+git-tree-sha1 = "9ed5cd23f4eff0f76f72f87e2a5141bb2995365a"
+
+[space]
+git-tree-sha1 = "0aa7b97ed43f1ce20273091bdbb0ffc36b32c9b5"
+
+[technology]
+git-tree-sha1 = "39704eed4a214ef01491695bd1405336d839b414"
