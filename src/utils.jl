@@ -1,4 +1,5 @@
 using Zygote:@adjoint
+using StatsBase
 
 @adjoint function sort(x::AbstractArray; by=identity, rev = true)
     p = sortperm(x, by=by, rev = rev)
@@ -33,6 +34,31 @@ function onecold(y)
         onecold_arr[i] = argmax_vec[i].I[1]
     end
     return onecold_arr
+end
+
+function temp_softmax(logits; t=1.2)
+  return softmax(logits ./ t)
+end
+
+function top_k_sample(probs; k=10)
+  probs ./=sum(probs)
+  sorted = sort(probs, rev = true)
+  indexes = partialsortperm(probs, 1:k, rev=true)
+  sorted_k = sorted[1:k] ./ sum(sorted[1:k])
+  index = sample(indexes, ProbabilityWeights(sorted_k), 1)
+  return index[1]
+end
+
+function nucleus_sample(probs; p=0.9)
+    probs ./=sum(probs)
+    sorted = sort(probs, rev = true)
+    indexes = sortperm(probs, rev=true)
+    cusum = cumsum(sorted)
+    upto_threshold = cusum .<= p
+    sorted .*= upto_threshold
+    sorted ./= sum(sorted)
+    index = sample(indexes, ProbabilityWeights(sorted),1)
+    return index[1]
 end
 
 function binary_accuracy(y_pred, y_true; threshold=0.5)
