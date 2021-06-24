@@ -4,7 +4,7 @@ function getBoW_indices(bow_key_or_path_list::Vector{String}, tokenizer)
     bow_indices = []
     for bow_key_or_path in bow_key_or_path_list
         if !isnothing(artifact_hash(bow_key_or_path, ARTIFACTS_TOML))
-            file_path = joinpath(get_registered_file, (bow_key_or_path, ".txt"))
+            file_path = joinpath(get_registered_file(bow_key_or_path), string(bow_key_or_path, ".txt"))
         else
             if isfile(bow_key_or_path)
                 file_path = bow_key_or_path
@@ -25,7 +25,7 @@ function getBoW_indices(bow_key_or_path_list::Vector{String}, tokenizer)
 end
 
 function build_BoW_OHE(bow_indices, tokenizer; device=gpu)
-    if bow_indices=nothing
+    if bow_indices==nothing
         return
     end
     onehot =[]
