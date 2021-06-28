@@ -1,15 +1,26 @@
+const pretrained = ["sentiment", "clickbait"] 
+
 struct ClassifierHead
     linear_layer::Dense
     embed_size::Int
     class_size::Int
 end
 
-function ClassifierHead(class_size::Int=1, embed_size::Int=768; load_from_pretrained=false, discrim=nothing)
+function ClassifierHead(class_size::Int=1, embed_size::Int=768; load_from_pretrained=false, discrim=nothing, file_name=nothing)
     if load_from_pretrained==true
         if discrim==nothing
             error("Discriminator not provided")
         else
-            path = get_registered_file(discrim)
+            if discrim in pretrained
+                path = joinpath(get_registered_file(discrim), string(discrim, "_classifier_head.bson"))
+            else 
+                print("Discriminator $discrim not in pretrained discriminators, looking for custom discriminator")
+                if isnothing(file_name)
+                    error("`file_name` not provided for custom discriminator bson file. Try `ClassifierHead(...; file_name=...)` or `getDiscriminator(...; ... , file_name=... )`")
+                else
+                    path = joinpath(get_registered_file(discrim), string(discrim, file_name))
+                end
+            end
             BSON.@load path config_metadata weights
             layer = Dense(weights["weight"], weights["bias"])
         end
@@ -82,8 +93,8 @@ function (m::DiscriminatorV2)(x, mask; args=nothing)
     logits
 end
 
-function getDiscriminator(model; load_from_pretrained=false, discrim=nothing, version=2, class_size::Int=1, embed_size::Int=768)
-    cl_head = ClassifierHead(class_size, embed_size; load_from_pretrained=load_from_pretrained, discrim=discrim)
+function getDiscriminator(model; load_from_pretrained=false, discrim=nothing, file_name=nothing, version=2, class_size::Int=1, embed_size::Int=768)
+    cl_head = ClassifierHead(class_size, embed_size; load_from_pretrained=load_from_pretrained, discrim=discrim, file_name=file_name)
     if version == 1
         return DiscriminatorV1(cl_head, model, embed_size)
     else
@@ -116,7 +127,8 @@ function save_classifier_head(cl_head; file_name="custom_classifier_head.bson", 
 end
 
 
-function save_discriminator(discrim; file_name="Custom_discrim.bson", path="./pretrained_discriminators", args=nothing, register_discrim=true, discrim_name="")
+
+function save_discriminator(discrim; file_name="custom_discrim_classifier_head.bson", path="./pretrained_discriminators", args=nothing, register_discrim=true, discrim_name="")
     save_path = joinpath(path, file_name)
     println("Saving classifier head weights for the discriminator to $save_path")
     save_classifier_head(discrim.cl_head; file_name=file_name, path=path, args=args, register_discrim=register_discrim, discrim_name=discrim_name)
