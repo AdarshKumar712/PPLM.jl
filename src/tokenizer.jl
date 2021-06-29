@@ -40,10 +40,10 @@ function tokenize(t::GPT2Tokenizer, text::AbstractString)
 end
 
 function encode(t::GPT2Tokenizer, text::AbstractString; add_prefix_space=false)
-    tokens = tokenize(t, text)
     if add_prefix_space==true
-        tokens = map(x-> string(" ", x), words)
+        text = string(" ", text)
     end
+    tokens = tokenize(t, text)
     t.encoder(tokens)
 end
 
