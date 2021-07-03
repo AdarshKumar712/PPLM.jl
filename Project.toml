@@ -22,6 +22,7 @@ Transformers = "21ca0261-441d-5938-ace7-c90938fde4d4"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
+BytePairEncoding = "0.2"
 julia = "1.6"
 
 [extras]
