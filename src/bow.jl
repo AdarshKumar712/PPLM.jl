@@ -2,6 +2,7 @@ using HTTP
 
 function get_bow_indices(bow_key_or_path_list::Vector{String}, tokenizer)
     bow_indices = []
+    bow_words = []
     for bow_key_or_path in bow_key_or_path_list
         if !isnothing(artifact_hash(bow_key_or_path, ARTIFACTS_TOML))
             file_path = joinpath(get_registered_file(bow_key_or_path), string(bow_key_or_path, ".txt"))
@@ -19,9 +20,10 @@ function get_bow_indices(bow_key_or_path_list::Vector{String}, tokenizer)
         words = split(strip(read(f, String)), "\n")
         encoded = map(x -> tokenizer(x; add_prefix_space=true), words)
         push!(bow_indices, encoded)
+        push!(bow_words, words)
         close(f)
     end
-    return bow_indices
+    return bow_indices, bow_words
 end
 
 function build_bow_ohe(bow_indices, tokenizer)
@@ -33,16 +35,16 @@ function build_bow_ohe(bow_indices, tokenizer)
     onehot_single = zeros(length(tokenizer.vocab))
     for bow in bow_indices
         bow = filter(x->(length(x)<=1),bow)
-        x = zeros(length(tokenizer.vocab), length(bow))
+        x = zeros(length(bow), length(tokenizer.vocab))
         for (i, word_id) in enumerate(bow)
-            x[word_id[0],i] = 1
-            onehot_single[word_id[0]]=1
+            x[i, word_id[1]] = 1
+            onehot_single[word_id[1]]=1
         end 
         x = x|> device
         push!(onehot, x)
     end
-    onehot_single = onehot_single |> gpu 
-    return onehot_single, onehot[1]
+    onehot_single = onehot_single |> device
+    return onehot_single, onehot
 end
 
 
