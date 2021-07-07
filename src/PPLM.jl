@@ -4,10 +4,14 @@ using Flux
 using Zygote: @adjoint
 using Flux: onehotbatch
 using Flux.Data: DataLoader
+using Flux.Optimise: update!
 using DataFrames: DataFrame
+using Transformers.HuggingFace
 using DataDeps
 using BSON
 using CUDA
+using Parameters: @with_kw
+using MLDataUtils
 using Pkg.Artifacts
 
 const ARTIFACTS_TOML = joinpath(@__DIR__, "Artifacts.toml")
