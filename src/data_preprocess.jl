@@ -54,8 +54,44 @@ function load_data(data_x, data_y, tokenizer::PretrainedTokenizer; batchsize::In
     return loader
 end
 
+function load_cached_data(discrim::Union{DiscriminatorV1, DiscriminatorV2}, data_x, data_y, tokenizer::PretrainedTokenizer; truncate::Bool=false, max_length::Integer=256, shuffle::Bool=false, batchsize::Int=4, drop_last::Bool=false, classification_type="Binary", num_classes=2, args=nothing)
+    global device
+    # if label zero indexed, increase by 1
+    if 0 in data_y
+        data_y.+=1
+    end
+    loader = load_data(data_x, data_y, tokenizer, batchsize=1,
+                truncate=truncate, max_length=max_length, shuffle=false, drop_last=drop_last)
+    
+    xs = Array{Float32}(undef, discrim.embed_size, 0)
+    
+    if classification_type == "Binary"
+        ys = Array{Int}(undef, 1, 0)
+    else
+        ys = Array{Float32}(undef, num_classes, 0)
+    end
+    
+    for (x, y) in loader
+        x_, y_, mask =  (data_preprocess(x, y, classification_type, num_classes; args=args))|> device
+        if typeof(discrim)==DiscriminatorV1
+            data_x_ = avg_representation(discrim, x_)             
+        else
+            data_x_ = avg_representation(discrim, x_, mask)
+        end
+        data_x_ = Float32.(data_x_) |> cpu
+        data_y_ = Float32.(y_) |> cpu
+        xs = cat(xs, data_x_, dims=2)
+        ys = cat(ys, data_y_, dims=2)
+    end
+    if args!=nothing
+        batchsize=args.batchsize
+    end
+    loader = DataLoader((xs, ys), batchsize=batchsize, partial=drop_last, shuffle=shuffle)
+    return loader
+end
+
 function load_data_from_csv(path_to_csv; text_col="text", label_col="label", delim=',', header=1)
-    df = CSV.FILE(path_to_csv; delim=delim) |> DataFrame
+    df = CSV.File(path_to_csv; delim=delim) |> DataFrame
     return df[!, text_col], df[!, label_col]
 end
 
