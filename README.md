@@ -5,7 +5,7 @@
 [![Build Status](https://github.com/adarshkumar712/PPLM.jl/workflows/CI/badge.svg)](https://github.com/adarshkumar712/PPLM.jl/actions)
 
 PPLM.jl is a Julia Package for Controllable Text Generation based on Plug and Play Language Models. The implementation is primarily based on 
-Transformers.jl GPT2 and allows user to steer the Text generation task based on some Attribute Models. While being centered around the idea of <b>Gradient based Perturbation<\b> from PPLM paper, PPLM.jl supports attribute controlled changes in `Hidden States` and `past key values` of GPT2 model. 
+Transformers.jl GPT2 and allows user to steer the Text generation task based on some Attribute Models. While being centered around the idea of <b>Gradient based Perturbation</b> from PPLM paper, PPLM.jl supports attribute controlled changes in `Hidden States` and `past key values` of GPT2 model. 
 
 - #### [Original Implementation of PPLM: *uber-research/PPLM*](https://github.com/uber-research/PPLM)
 
