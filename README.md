@@ -4,9 +4,10 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://adarshkumar712.github.io/PPLM.jl/dev)
 [![Build Status](https://github.com/adarshkumar712/PPLM.jl/workflows/CI/badge.svg)](https://github.com/adarshkumar712/PPLM.jl/actions)
 
-A Julia based implementation of <b>Plug and Play Language Models: a Simple Approach to Controlled Text Generation</b>, along with some additional experiments on controlled text generation. 
+PPLM.jl is a Julia Package for Controllable Text Generation based on Plug and Play Language Models. The implementation is primarily based on 
+Transformers.jl GPT2 and allows user to steer the Text generation task based on some Attribute Models. While being centered around the idea of <b>Gradient based Perturbation<\b> from PPLM paper, PPLM.jl supports attribute controlled changes in `Hidden States` and `past key values` of GPT2 model. 
 
-- #### [Original Implementation: *uber-research/PPLM*](https://github.com/uber-research/PPLM)
+- #### [Original Implementation of PPLM: *uber-research/PPLM*](https://github.com/uber-research/PPLM)
 
 ## Plug and Play Language Models: a Simple Approach to Controlled Text Generation
 
@@ -37,10 +38,11 @@ WIP (Not yet registered)
 - [x] GPT2 Tokenizer
 - [x] Discriminator structure
 - [x] Data Preprocessing
-- [ ] Normal Text Generation
+- [x] Normal Text Generation
 - [ ] Controlled Text Generation: Perturb Probabilities
-- [ ] Controlled Text Generation: Perurb hidden states
-- [ ] ...
+- [ ] Controlled Text Generation: Perturb hidden states
+- [ ] Controlled Text Generation: Perturb Past key values
+- [ ] Support BagOfWords Models
 
 For more details on the progress, checkout the [Project:PPLM](https://github.com/AdarshKumar712/PPLM.jl/projects/1)
 
@@ -51,6 +53,8 @@ Coming soon...
 ## Tutorials / Blogs
 
 Coming soon...
+
+**Note**: There might be some differences here from original implementation of PPLM, but the overall idea of Plug and Play Language Models remains the same as the paper. In case some feature from original repository of PPLM is missing here, I will try to accomodate that in future. 
 
 # References 
 
