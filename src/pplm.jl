@@ -135,3 +135,94 @@ function perturb_past_bow(model, prev, past, original_probs, args)
     end
     return pert_past 
 end
+
+
+# need some abstration here
+function perturb_hidden_discrim(hidden, model, tokenizer, args)
+    global device
+    classifier, config_metadata = ClassifierHead(;load_from_pretrained=true, discrim=args.discrim)
+    classifier = classifier|> device
+    if args.target_class_id ==-1
+        y_label = config_metadata.default_class
+    else
+        y_label = args.target_class_id
+    end
+    y_one_hot = Flux.onehotbatch([y_label], 1:config_metadata["class_size"]) |> device
+    
+    kl_scale=args.fusion_kl_scale
+    opt = ADAM(args.stepsize)
+    p = temp_softmax(model.lm_head(hidden)[:, end, :]; t=args.temperature)
+    
+    new_hidden = deepcopy(hidden)
+    ps = params(new_hidden)
+    for i in 1:args.num_iterations
+        _, back = Zygote.pullback(ps) do
+                hidden_sum = sum(new_hidden; dims=2)
+                logits_1 = classifier(hidden_sum)
+                if length(classifier.linear_layer.bias)==1
+                    y_label = y_label |> device
+                    loss_1 = Flux.logitbinarycrossentropy(logits_1, y_label)
+                else
+                    loss_1 = Flux.logitcrossentropy(logits_1, y_one_hot)
+                end
+                logits = model.lm_head(new_hidden)[:, end, :]
+                probs = temp_softmax(logits; t=args.temperature)
+                loss_2 = kl_scale * Flux.kldivergence(probs, p) 
+                
+                loss_1 + loss_2
+            end
+        grads = back(1f0)
+        update!(opt, ps, grads)
+    end
+    return new_hidden 
+end
+
+# TODO add code to support horizontal length, futuristic perturbation
+function perturb_past_discrim(model, prev, past, original_probs, args)
+    global device
+    classifier, config_metadata = ClassifierHead(;load_from_pretrained=true, discrim=args.discrim)
+    classifier = classifier|> device
+    if args.target_class_id ==-1
+        y_label = config_metadata.default_class
+    else
+        y_label = args.target_class_id
+    end
+    y_one_hot = Flux.onehotbatch([y_label], 1:config_metadata["class_size"]) |> device
+    
+    kl_scale=args.fusion_kl_scale
+    opt = ADAM(args.stepsize)
+    
+    function bow_loss(probs)
+        loss_words = bow_all*probs
+        loss = -log(sum(loss_words))
+        loss
+    end
+    
+    pert_past = deepcopy(past) |> device
+    ps = params(pert_past)
+    for i in 1:args.num_iterations
+        _, back = Zygote.pullback(ps) do
+                output = model(prev; past_key_values=pert_past,
+                                        output_attentions=false,
+                                        output_hidden_states=true,
+                                        use_cache=true);
+                hidden = output.hidden_states[end]
+                hidden_sum = sum(hidden; dims=2)
+                logits_1 = classifier(hidden_sum)
+                if length(classifier.linear_layer.bias)==1
+                    y_label = y_label |> device
+                    loss_1 = Flux.logitbinarycrossentropy(logits_1, y_label)
+                else
+                    loss_1 = Flux.logitcrossentropy(logits_1, y_one_hot)
+                end
+                logits = model.lm_head(hidden)[:, end, :]
+                probs = temp_softmax(logits; t=args.temperature)
+                loss_1 = bow_loss(probs)
+                loss_2 = kl_scale * Flux.kldivergence(probs, original_probs)        # throwing error
+                loss_1 + loss_2
+            end
+        grads = back(1f0)
+        update!(opt, ps, grads)
+    end
+    return pert_past 
+end
