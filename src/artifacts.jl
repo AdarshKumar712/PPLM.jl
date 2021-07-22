@@ -2,6 +2,12 @@ using Pkg.GitTools
 
 isurl(path::AbstractString) = startswith(path, "http://") || startswith(path, "https://")
 
+"""
+    get_registered_file(name)
+
+Fetch registered file path from Artifacts.toml, based on the artifact `name`.  
+
+"""
 function get_registered_file(name)
     global ARTIFACTS_TOML
     hash = artifact_hash(name, ARTIFACTS_TOML)
@@ -14,6 +20,11 @@ function get_registered_file(name)
     artifact_path(hash)
 end
 
+"""
+    get_artifact(name)
+
+Utility function to download/install the artifact in case not already installed.
+"""
 function get_artifact(name)
     meta = Artifacts.artifact_meta(name, ARTIFACTS_TOML)
     file_path = meta["download"][1]["url"]
@@ -27,9 +38,19 @@ function get_artifact(name)
 end
 
 """
+    register_custom_file(artifact_name, file_name, path)
 
-Example
+Function to register custom file under `artifact_name` in Artifacts.toml. `path` expects path of the directory where the file `file_name` is stored. Stores the complete path to the file as Artifact URL.
+
+# Example
+
+```
 register_custom_file('custom', 'xyz.txt','./folder/folder/')
+
+```
+
+Note: In case this gives permission denied error, change the Artifacts.toml file permissions using 
+`chmod(path_to_file_in_julia_installation , 0o764)`or similar.
 """
 function register_custom_file(artifact_name, file_name, path)
     file_path = joinpath(path, file_name)
