@@ -1,10 +1,3 @@
-[clickbait]
-git-tree-sha1 = "cb2d9f920606a943bab261f43d032064c1075ad4"
-
-    [[clickbait.download]]
-    sha256 = "f685c542916fb1746ac5e6570501b570e46a1190"
-    url = "./pretrained_discriminators/clickbait_classifier_head.bson"
-
 [legal]
 git-tree-sha1 = "31910cb9bc5fd2026f64692a3ca1b062be78c937"
 lazy = true
@@ -60,13 +53,6 @@ lazy = true
     [[science.download]]
     sha256 = "6362f30eb8faf5987d5dbe2fd64802c399f8eb55"
     url = "https://s3.amazonaws.com/models.huggingface.co/bert/pplm/bow/science.txt"
-
-[sentiment]
-git-tree-sha1 = "a6cfde2983d18ba4897d4b8b984ac826b5be0081"
-
-    [[sentiment.download]]
-    sha256 = "877e9eec1fa1333ef45d8f877b3b0f681827c54b"
-    url = "./pretrained_discriminators/sentiment_classifier_head.bson"
 
 [space]
 git-tree-sha1 = "0aa7b97ed43f1ce20273091bdbb0ffc36b32c9b5"
