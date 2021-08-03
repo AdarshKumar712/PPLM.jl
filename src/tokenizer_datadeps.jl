@@ -1,5 +1,10 @@
 using DataDeps
 
+"""
+    init_tokenizer_datadeps()
+
+Initialize datadeps for gpt2 tokenizer.
+"""
 function init_tokenizer_datadeps()
     register(DataDep("Vocab", 
     "GPT2 Pretrained Tokenizer Vocabulary file from HuggingFace.",
