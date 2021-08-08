@@ -1,7 +1,12 @@
 using Zygote:@adjoint
 using StatsBase
 
-@adjoint function sort(x::AbstractArray; by=identity, rev = true)
+function sort_(x::AbstractArray; by=identity, rev = true)
+    p = sortperm(x, by=by, rev = rev)
+    return x[p]
+end
+
+@adjoint function sort_(x::AbstractArray; by=identity, rev = true)
     p = sortperm(x, by=by, rev = rev)
     return x[p], x̄ -> (x̄[invperm(p)],)
 end
@@ -16,7 +21,7 @@ function top_k_logits(logits::AbstractArray, k; prob = false)
     if k==0
     	return logits
     else
-        top_kth = sort(logits;rev=true)[k]
+        top_kth = sort_(logits;rev=true)[k]
         mask = logits.>=top_kth
         if prob==false
             return logits_ = map(*, logits, mask) + map(~, mask).*-1e-10 
@@ -24,6 +29,41 @@ function top_k_logits(logits::AbstractArray, k; prob = false)
             return logits_ = map(*, logits, mask)
         end
     end
+end
+
+function temp_softmax(logits; t=1.2)
+  return softmax(logits ./ t)
+end
+
+"""
+    top_k_sample(probs; k=10)
+
+Sampling function to return index from `top_k` probabilities, based on provided `k`. Function removes all tokens with a probability less than the last token of the top_k before sampling.
+"""
+function top_k_sample(probs; k=10)
+  probs ./=sum(probs)
+  sorted = sort(probs, rev = true)
+  indexes = partialsortperm(probs, 1:k, rev=true)
+  sorted_k = sorted[1:k] ./ sum(sorted[1:k])
+  index = sample(indexes, ProbabilityWeights(sorted_k), 1)
+  return index[1]
+end
+
+"""
+    nucleus_sample(probs; p=0.8)
+
+Nuclues sampling function, to return after sampling reverse sorted probabilities `probs` till the index, where cumulative probability remains less than provided `p`. It removes tokens with cumulative probability above the threshold `p` before sampling.
+"""
+function nucleus_sample(probs; p=0.8)
+    probs ./=sum(probs)
+    sorted = sort(probs, rev = true)
+    indexes = sortperm(probs, rev=true)
+    cusum = cumsum(sorted)
+    upto_threshold = cusum .<= p
+    sorted .*= upto_threshold
+    sorted ./= sum(sorted)
+    index = sample(indexes, ProbabilityWeights(sorted),1)
+    return index[1]
 end
 
 # Onecold
@@ -36,36 +76,21 @@ function onecold(y)
     return onecold_arr
 end
 
-function temp_softmax(logits; t=1.2)
-  return softmax(logits ./ t)
-end
+"""
+    binary_accuracy(y_pred, y_true; threshold=0.5)
 
-function top_k_sample(probs; k=10)
-  probs ./=sum(probs)
-  sorted = sort(probs, rev = true)
-  indexes = partialsortperm(probs, 1:k, rev=true)
-  sorted_k = sorted[1:k] ./ sum(sorted[1:k])
-  index = sample(indexes, ProbabilityWeights(sorted_k), 1)
-  return index[1]
-end
-
-function nucleus_sample(probs; p=0.9)
-    probs ./=sum(probs)
-    sorted = sort(probs, rev = true)
-    indexes = sortperm(probs, rev=true)
-    cusum = cumsum(sorted)
-    upto_threshold = cusum .<= p
-    sorted .*= upto_threshold
-    sorted ./= sum(sorted)
-    index = sample(indexes, ProbabilityWeights(sorted),1)
-    return index[1]
-end
-
+Calculates Averaged Binary Accuracy based on `y_pred` and `y_true`. Argument `threshold` is used to specify the minimum predicted probability `y_pred` required to be labelled as `1`. Default value set as `0.5`.
+"""
 function binary_accuracy(y_pred, y_true; threshold=0.5)
     @assert size(y_pred) == size(y_true)
     return sum((y_pred .>= threshold) .== y_true) / size(y_true, 1)
 end
 
+"""
+    categorical_accuracy(y_pred, y_true)
+
+Calculates Averaged Categorical Accuracy based on `y_pred` and `y_true`.
+"""
 function categorical_accuracy(y_pred, y_true)
     @assert size(y_pred) == size(y_true)
     return sum(onecold(y_pred) .== onecold(y_true)) / size(y_true, 2)
