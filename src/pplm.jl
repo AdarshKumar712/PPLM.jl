@@ -1,6 +1,42 @@
 using Flux.Optimise:ADAM, update!
 using Zygote
 
+"""
+@with_kw struct pplm
+    method::String="BoW"
+    perturb::String="hidden"     # hidden or past -> hidden support BoW only without gradient based change
+    bow_list::Vector{String}=["military"]
+    discrim::String="toxicity"
+    embed_size::Int=768
+    target_class_id=-1
+    file_name::String=""
+    path::String=""
+    stepsize::Float32=0.01      
+    max_length::Int=100
+    num_iterations::Int=2        # more the number of iterations, more updates, more time to update
+    top_k::Int=50
+    top_p::Float32=0.8
+    temperature::Float32=1.1
+    fusion_gm_scale::Float32=0.9
+    fusion_kl_scale::Float32=0.01
+    cuda::Tuple{Bool, Int64}=(CUDA.has_cuda(), device_id)
+    window_length::Int=0          # window length 0 corresponds to infinite length
+    gamma::Float32=1.5
+end
+
+Struct to contain all the hyperparameters required for PPLM based generation.
+
+Example:
+
+```julia
+# bow model
+args = pplm(method="BoW", bow_list=["legal"], num_iterations=3)
+
+# discriminator model
+args = pplm(method="Discrim", perturb="past", stepsize=0.02)
+```
+
+"""
 @with_kw struct pplm
     method::String="BoW"
     perturb::String="hidden"     # hidden or past -> hidden support BoW only without gradient based change
@@ -24,6 +60,11 @@ using Zygote
 end
 
 # this is gradient based perturbation technique, supports only BoW
+"""
+    perturb_probs(probs, tokenizer, args)
+
+Perturb probabilities `probs` based on provided Bag of Words list (as given with `args`). This function is supported only for BoW model. 
+"""
 function perturb_probs(probs, tokenizer, args)
     global device
     opt=ADAM(args.stepsize)
@@ -59,6 +100,13 @@ function perturb_probs(probs, tokenizer, args)
 end
 
 # need some abstration here
+"""
+    perturb_hidden_bow(hidden, model, tokenizer, args)
+
+Perturb hidden states `hidden` based on provided Bag of Words list (as given with `args`). The perturbation is primarily based on the gradient calculated over losses evaluated over desired Bag of Words and KL Divergence from original token. 
+
+Also checkout [`perturb_hidden_discrim`](@ref PPLM.perturb_hidden_discrim)
+"""
 function perturb_hidden_bow(hidden, model, tokenizer, args)
     global device
     bow_indices, _ = get_bow_indices(args.bow_list, tokenizer)
@@ -96,6 +144,13 @@ function perturb_hidden_bow(hidden, model, tokenizer, args)
     return new_hidden 
 end
 
+"""
+    perturb_past_bow(model, prev, past, original_probs, args)
+
+Perturb past key values `prev` based on provided Bag of Words list (as given with `args`). The perturbation is primarily based on the gradient calculated over losses evaluated over desired Bag of Words and KL Divergence from original token. 
+
+Also checkout [`perturb_past_discrim`](@ref PPLM.perturb_past_discrim)
+"""
 function perturb_past_bow(model, prev, past, original_probs, args)
     global device
     bow_indices, _ = PPLM.get_bow_indices(args.bow_list, tokenizer)
@@ -138,6 +193,13 @@ end
 
 
 # need some abstration here
+"""
+    perturb_hidden_discrim(hidden, model, tokenizer, args)
+
+Perturb hidden states `hidden` based on provided Discriminator (as given with `args`). The perturbation is primarily based on the gradient calculated over losses evaluated over desired Discriminator attribute and KL Divergence from original token. 
+
+Also checkout [`perturb_hidden_bow`](@ref PPLM.perturb_hidden_bow)
+"""
 function perturb_hidden_discrim(hidden, model, tokenizer, args)
     global device
     classifier, config_metadata = ClassifierHead(;load_from_pretrained=true, discrim=args.discrim)
@@ -178,6 +240,13 @@ function perturb_hidden_discrim(hidden, model, tokenizer, args)
 end
 
 # TODO add code to support horizontal length, futuristic perturbation
+"""
+    perturb_past_discrim(model, prev, past, original_probs, args)
+
+Perturb past key values `prev` based on provided Discriminator (as given with `args`). The perturbation is primarily based on the gradient calculated over losses evaluated over desired Discriminator attribute and KL Divergence from original token.
+
+Also checkout [`perturb_past_bow`](@ref PPLM.perturb_past_bow)
+"""
 function perturb_past_discrim(model, prev, past, original_probs, args)
     global device
     classifier, config_metadata = ClassifierHead(;load_from_pretrained=true, discrim=args.discrim)

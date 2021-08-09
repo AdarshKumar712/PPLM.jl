@@ -48,7 +48,6 @@ Function to register custom file under `artifact_name` in Artifacts.toml. `path`
 register_custom_file('custom', 'xyz.txt','./folder/folder/')
 
 ```
-
 Note: In case this gives permission denied error, change the Artifacts.toml file permissions using 
 `chmod(path_to_file_in_julia_installation , 0o764)`or similar.
 """

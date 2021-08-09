@@ -9,7 +9,6 @@ Returns a list of `list of indices` of words from each Bag of word in the `bow_k
 ``` julia
 get_bow_indices(["legal", "military"])
 ```
-
 """
 function get_bow_indices(bow_key_or_path_list::Vector{String}, tokenizer)
     bow_indices = []
