@@ -1,6 +1,19 @@
 # TODO: define global verbosity throughout the package
 
 # function for normal generation
+
+"""
+    sample_normal(;prompt="I hate the customs", tokenizer=nothing, model=nothing, max_length=100, method="top_k", k=50, t=1.2, p=0.5, add_eos_start=true)
+
+Function to generate normal Sentences with `model` and `tokenizer` provided. In case not provided, function itself create instance of GPT2-small tokenizer and LM Head Model. The sentences are started with the provided `prompt`, and generated till token length reaches `max_length`.
+
+Two sampling methods of generation are provided with this function:
+1) method='top_k'
+2) method='nucleus'
+
+Any of these methods can be used provided with either k or p.
+
+"""
 function sample_normal(;prompt="I hate the customs", tokenizer=nothing, model=nothing, max_length=100, method="top_k", k=50, t=1.2, p=0.5, add_eos_start=true)
     global device
     if tokenizer==nothing
@@ -36,8 +49,13 @@ function sample_normal(;prompt="I hate the customs", tokenizer=nothing, model=no
 end
 
 # function for perturbed generation
+"""
+    function sample_pplm(pplm_args;tokenizer=nothing, model=nothing, prompt="I hate the customs", add_eos_start=true)
 
-function sample_pplm(pplm_args;tokenizer=nothing, model=nothing, prompt="I hate the customs", add_eos_start=true, gm_function=nothing)
+Function for PPLM model based generation. Generate perturbed sentence using `pplm_args`, tokenizer and model (GPT2, in case not provided), starting with `prompt`. In this function the generation is based on the arguments/parameters provided in `pplm_args`, which is an instance of `pplm` struct.  
+
+"""
+function sample_pplm(pplm_args;tokenizer=nothing, model=nothing, prompt="I hate the customs", add_eos_start=true)
     if tokenizer == nothing
         if pplm_args.embed_size==1024 || pplm_args.discrim in ["sentiment", "clickbait"]
             tokenizer, model = get_gpt2_medium()

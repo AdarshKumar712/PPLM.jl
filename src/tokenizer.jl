@@ -192,7 +192,6 @@ For vector of vector of `token_ids`, use:
 ``` julia
 map(x->decode(tokenizer, x), tokens_id_vector_of_vector)
 ```
-
 """
 function detokenize(t::GPT2Tokenizer, tokens_ids::Vector{Int})
     tokens_list = decode(t, tokens_ids)

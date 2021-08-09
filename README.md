@@ -39,10 +39,13 @@ WIP (Not yet registered)
 - [x] Discriminator structure
 - [x] Data Preprocessing
 - [x] Normal Text Generation
-- [ ] Controlled Text Generation: Perturb Probabilities
-- [ ] Controlled Text Generation: Perturb hidden states
-- [ ] Controlled Text Generation: Perturb Past key values
-- [ ] Support BagOfWords Models
+- [x] Controlled Text Generation: Perturb Probabilities
+- [x] Controlled Text Generation: Perturb hidden states
+- [x] Controlled Text Generation: Perturb Past key values
+- [x] Support BagOfWords Models
+- [ ] Add Docstrings
+- [ ] Add Documentation
+- [ ] Add Jupyter Notebook for examples
 
 For more details on the progress, checkout the [Project:PPLM](https://github.com/AdarshKumar712/PPLM.jl/projects/1)
 
