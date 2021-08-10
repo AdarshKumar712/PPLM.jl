@@ -77,11 +77,19 @@ To generate text, you can use the following code:
 Here is a Sample text generated with GPT2 using the above code:
 
 > With **Top_k sampling**, k=50, prompt = "Fruits are"
-```
-"Fruits are the key ingredient in our diet; their vitamins, and proteins are essential to build our immune system. What makes a good fruit one of them is simply as simple as your diet is. Fruit is one simple nutrient that is used effectively as a defense against sickness and stress (which can be very life changing indeed). When the body has just consumed enough fat for at least 40-50 days, the body also releases hormones known as the hormone estrogen in order to prevent infection. A good diet makes life easier"
+```julia
+"Fruits are the key ingredient in our diet; their vitamins, and proteins are essential to build our immune system. 
+What makes a good fruit one of them is simply as simple as your diet is. Fruit is one simple nutrient that is used 
+effectively as a defense against sickness and stress (which can be very life changing indeed). When the body has 
+just consumed enough fat for at least 40-50 days, the body also releases hormones known as the hormone estrogen in 
+order to prevent infection. A good diet makes life easier"
+
 ```
 
 > With **Nucleus sampling**, p=0.6, prompt = "Fruits are"
-```
-"Fruits are packed with the goodness of ancient Greek life, plants that protect and revive us from death. At every stone in the garden, your fruit may reflect on the people who once carried you from town to town, those who would still give you food to live, and the perfect pair of hand-gloved fingers you may wear in your golden bedroll."
+```julia
+"Fruits are packed with the goodness of ancient Greek life, plants that protect and revive us from death. At every 
+stone in the garden, your fruit may reflect on the people who once carried you from town to town, those who would 
+still give you food to live, and the perfect pair of hand-gloved fingers you may wear in your golden bedroll."
+
 ```

@@ -2,10 +2,9 @@
 
 Plug and Play Language Models or PPLM controls the generation of sentences in Large Language Models like GPT2 using gradient based steering towards control attributes. The gradient is evaluated based on Attribute Model being used, which is then used to perturb hidden state or past key values of the model. The perturbation is applied such that it pushes the generation towards the desired attribute.
 
-<p align="center">
-    ![PPLM](./PPLM.png)
-    **Figure 1** Simplified version of how PPLM works
-</p>
+![PPLM](./PPLM.png)
+
+**Figure 1** Simplified version of how PPLM works
 
 ## Attribute Models
 
@@ -29,10 +28,8 @@ PPLM.jl further supports training your own Discriminator model and then generate
 ## Support
 
 PPLM.jl provides support for attribute control based on:
-<ol>
-    <li> Hidden State Perturbation
-    <li> Past Key Values Perturbation
-</ol>
+1) Hidden State Perturbation
+2) Past Key Values Perturbation
 
 For more details, check out the implementation in the repo.
 
