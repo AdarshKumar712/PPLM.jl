@@ -15,6 +15,13 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "How does it work?" => "how.md",
+        "GPT2: Tokenization and Generation" => "gpt2.md",
+        "Bag Of Words Model" => "bow.md",
+        "Discriminator Model" => "discrim.md",
+        "Discriminator Training" => "discrim_train.md",
+        "API" => "api.md",
+        "Contact Info" => "contact.md",
     ],
 )
 
