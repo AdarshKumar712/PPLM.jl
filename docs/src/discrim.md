@@ -39,7 +39,7 @@ tokenizer, model = PPLM.get_gpt2();
 Perturbation of hidden states can be done similar to the given example
 
 ```julia
-args = PPLM.pplm(method="Discrim", discrim="toxicity", target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
+args = PPLM.pplm(method="Discrim", perturb="hidden", discrim="toxicity", target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
 
 PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt="Do I look like I give a")
 
@@ -61,7 +61,7 @@ for i in 1:100
     original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
     
     hidden = outputs.hidden_states[end]
-    modified_hidden = perturb_hidden_discrim(hidden, model, tokenizer, args3)
+    modified_hidden = perturb_hidden_discrim(hidden, model, tokenizer, args)
     pert_logits = model.lm_head(modified_hidden)[:, end, 1]
     pert_probs = PPLM.temp_softmax(pert_logits; t=args.temperature)
     
@@ -78,7 +78,12 @@ text = detokenize(tokenizer, input_)
 Sample generation:
 
 ```julia
-"Do I look like I give a damn? I want to be a nice person who treats my colleagues and even friends like people.\n\nFor one thing, it takes time for me and others to really consider and think about your value. In the past, I often felt uncomfortable working with people who thought my interests, opinions and interests were different, and didn't have the emotional and spiritual value to interact with them. I didn't feel like they wanted me to speak to their views. So I started getting involved on many other topics"
+"Do I look like I give a damn? I want to be a nice person who treats my colleagues and even friends 
+like people.\n\nFor one thing, it takes time for me and others to really consider and think about 
+your value. In the past, I often felt uncomfortable working with people who thought my interests, 
+opinions and interests were different, and didn't have the emotional and spiritual value to interact 
+with them. I didn't feel like they wanted me to speak to their views. So I started getting involved 
+on many other topics"
 ```
 
 ## Perturb Past Key Values
@@ -87,7 +92,7 @@ Sample generation:
 Perturbation of hidden states can be done similar to the given example
 
 ```julia
-args = PPLM.pplm(method="Discrim", discrim="toxicity", target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
+args = PPLM.pplm(method="Discrim", perturb="past", discrim="toxicity", target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
 
 PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt="Do I look like I give a")
 
@@ -111,7 +116,7 @@ for i in 1:100
     original_logits = outputs.logits[:, end, 1]
     original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
     
-    new_past = perturb_past_discrim(model, prev, past, original_probs, args3)
+    new_past = perturb_past_discrim(model, prev, past, original_probs, args)
     output_new = model(prev; past_key_values=new_past,
                                         output_attentions=false,
                                         output_hidden_states=true,
@@ -133,7 +138,12 @@ text = detokenize(tokenizer, input_)
 Sample generation:
 
 ```julia
-"Do I look like I give a proper treatment to these people? We're seeing real examples in all the things that they have done as well. There is going to be a discussion on there with the state of what steps we should be taking to address all cases of people in the community, and then what we are going to do going forward that has not a national interest interest. Is your experience with similar issues from different different sides affected your work/responsibility of not doing that things you find seem quite simple, at first glance?"
+"Do I look like I give a proper treatment to these people? We're seeing real examples in all the 
+things that they have done as well. There is going to be a discussion on there with the state of 
+what steps we should be taking to address all cases of people in the community, and then what we 
+are going to do going forward that has not a national interest interest. Is your experience with 
+similar issues from different different sides affected your work/responsibility of not doing that 
+things you find seem quite simple, at first glance?"
 ```
 
 ## Load Custom Model
