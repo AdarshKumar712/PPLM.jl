@@ -102,13 +102,21 @@ Sample generated:
 Nomral Generation:
 
 ```julia
-"You should just kill him.\n\n-The Chosen\n\nYou never heard, no matter how stupid people said it. I don't understand how she could think she was safe when she had nothing but contempt for me for four very fucking years I just walked along and played the part of a woman who had the power to do what any woman can do if a woman's life isn't as she told herself it would be so. What's on the page? I mean, there's my dad who was just running"
+"You should just kill him.\n\n-The Chosen\n\nYou never heard, no matter how stupid people said it. I 
+don't understand how she could think she was safe when she had nothing but contempt for me for four very 
+fucking years I just walked along and played the part of a woman who had the power to do what any woman 
+can do if a woman's life isn't as she told herself it would be so. What's on the page? I mean, there's 
+my dad who was just running"
 ```
 
 With Disciminator model (discrim = "toxicity")
 
 ```julia
-"You should just kill yourself before you realize how much harm it can do. If you have never spent a penny you can always try to quit sometime. Some men want a break and some don't: If money helps you, it'll help yourself too, but try to make up for it if that helps or if something good starts to come out.\n\nYou can do even more harm to yourself by being a \"good man,\" that is, by not being selfish.\n\n5 What Would Stake Out\n"
+"You should just kill yourself before you realize how much harm it can do. If you have never spent a 
+penny you can always try to quit sometime. Some men want a break and some don't: If money helps you, it'll 
+help yourself too, but try to make up for it if that helps or if something good starts to come out.\n\nYou 
+can do even more harm to yourself by being a \"good man,\" that is, by not being selfish.\n\n5 What Would
+Stake Out\n"
 ```
 
 For more, checkout the documentation.
