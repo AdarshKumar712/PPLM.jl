@@ -1,6 +1,8 @@
 # Bag Of Words Model
 
-In the BoW model, we have a list of words that correspond to that particular attribute, usually used in sentences that can be considered to have that attribute. For example, consider the case of Topic-based attribute, let's say `Politics`, where we want to drive the topic of generation towards politics, then a typical BagOfWord for `Politics` will include words like government, politics, democracy, federation, etc, etc. These words will then be used for perturbation through PPLM.jl. Before getting into how to do this with PPLM.jl, let's first delve into some technical background and prerequisites of the BoW model and how it works
+In the BoW model, we have a list of words that correspond to that particular attribute, usually used in sentences that can be considered to have that attribute. For example, consider the case of Topic-based attribute, let's say `Politics`, where we want to drive the topic of generation towards politics, then a typical BagOfWord for `Politics` will include words like government, politics, democracy, federation, etc, etc. These words will then be used for perturbation through PPLM.jl.
+
+Let's take up an example to understand how it works.
 
 Let's first initialize the package and model.
 ```julia
@@ -37,7 +39,7 @@ for i in 1:100
                         use_cache=false);
     original_logits = outputs.logits[:, end, 1]
     original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
-    pert_probs = perturb_probs(original_probs, tokenizer, args3)
+    pert_probs = perturb_probs(original_probs, tokenizer, args)
     gm_scale = args.fusion_gm_scale
     pert_probs = Float32.((original_probs.^(1-gm_scale)).*(pert_probs.^(gm_scale)))
     new_token = PPLM.top_k_sample(pert_probs; k=args.top_k)[1]
@@ -86,7 +88,7 @@ for i in 1:100
     
     hidden = outputs.hidden_states[end]
     
-    modified_hidden = perturb_hidden_bow(model, hidden, args3)
+    modified_hidden = perturb_hidden_bow(model, hidden, args)
     pert_logits = model.lm_head(modified_hidden)[:, end, 1]
     pert_probs = PPLM.temp_softmax(pert_logits; t=args.temperature)
     
@@ -138,7 +140,7 @@ for i in 1:100
     original_logits = outputs.logits[:, end, 1]
     original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
     
-    new_past = perturb_past_bow(model, prev, past, original_probs, args3)
+    new_past = perturb_past_bow(model, prev, past, original_probs, args)
     output_new = model(prev; past_key_values=new_past,
                                         output_attentions=false,
                                         output_hidden_states=true,

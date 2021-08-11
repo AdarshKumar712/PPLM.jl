@@ -202,7 +202,7 @@ Also checkout [`perturb_hidden_bow`](@ref PPLM.perturb_hidden_bow)
 """
 function perturb_hidden_discrim(hidden, model, tokenizer, args)
     global device
-    classifier, config_metadata = ClassifierHead(;load_from_pretrained=true, discrim=args.discrim)
+    classifier, config_metadata = ClassifierHead(;load_from_pretrained=true, discrim=args.discrim, path=args.path)
     classifier = classifier|> device
     if args.target_class_id ==-1
         y_label = config_metadata.default_class
@@ -249,7 +249,7 @@ Also checkout [`perturb_past_bow`](@ref PPLM.perturb_past_bow)
 """
 function perturb_past_discrim(model, prev, past, original_probs, args)
     global device
-    classifier, config_metadata = ClassifierHead(;load_from_pretrained=true, discrim=args.discrim)
+    classifier, config_metadata = ClassifierHead(;load_from_pretrained=true, discrim=args.discrim, path=args.path)
     classifier = classifier|> device
     if args.target_class_id ==-1
         y_label = config_metadata.default_class
