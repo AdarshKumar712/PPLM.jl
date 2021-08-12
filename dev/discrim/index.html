@@ -22,7 +22,7 @@ input_ = [tokenizer.eos_token_id; tokenizer(&quot;Do I look like I give a&quot;)
 args = PPLM.pplm(method=&quot;Discrim&quot;, perturb=&quot;hidden&quot;, discrim=&quot;toxicity&quot;, target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
 
 for i in 1:100
-    input_ids = reshape(input_[:], :, 1) |&gt; gpu
+    input_ids = reshape(input_[:], :, 1) |&gt; PPLM.gpu
     outputs = model(input_ids; output_attentions=false,
                         output_hidden_states=true,
                         use_cache=false);
@@ -30,7 +30,7 @@ for i in 1:100
     original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
     
     hidden = outputs.hidden_states[end]
-    modified_hidden = perturb_hidden_discrim(hidden, model, tokenizer, args)
+    modified_hidden = PPLM.perturb_hidden_discrim(hidden, model, tokenizer, args)
     pert_logits = model.lm_head(modified_hidden)[:, end, 1]
     pert_probs = PPLM.temp_softmax(pert_logits; t=args.temperature)
     
@@ -46,7 +46,7 @@ like people.\n\nFor one thing, it takes time for me and others to really conside
 your value. In the past, I often felt uncomfortable working with people who thought my interests, 
 opinions and interests were different, and didn&#39;t have the emotional and spiritual value to interact 
 with them. I didn&#39;t feel like they wanted me to speak to their views. So I started getting involved 
-on many other topics&quot;</code></pre><h2 id="Perturb-Past-Key-Values"><a class="docs-heading-anchor" href="#Perturb-Past-Key-Values">Perturb Past Key Values</a><a id="Perturb-Past-Key-Values-1"></a><a class="docs-heading-anchor-permalink" href="#Perturb-Past-Key-Values" title="Permalink"></a></h2><p>Perturbation of hidden states can be done similar to the given example</p><pre><code class="language-julia">args = PPLM.pplm(method=&quot;Discrim&quot;, perturb=&quot;past&quot;, discrim=&quot;toxicity&quot;, target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
+on many other topics&quot;</code></pre><h2 id="Perturb-Past-Key-Values"><a class="docs-heading-anchor" href="#Perturb-Past-Key-Values">Perturb Past Key Values</a><a id="Perturb-Past-Key-Values-1"></a><a class="docs-heading-anchor-permalink" href="#Perturb-Past-Key-Values" title="Permalink"></a></h2><p>Perturbation of hidden states can be done similar to the given example</p><pre><code class="language-julia">args = PPLM.pplm(method=&quot;Discrim&quot;, perturb=&quot;past&quot;, discrim=&quot;toxicity&quot;, target_class_id=1, stepsize=0.004, fusion_kl_scale=0.05);
 
 PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt=&quot;Do I look like I give a&quot;)
 </code></pre><p>Another more crude way of generation could be:</p><pre><code class="language-julia">
@@ -55,7 +55,7 @@ input_ = [tokenizer.eos_token_id; tokenizer(&quot;Do I look like I give a&quot;)
 args = PPLM.pplm(method=&quot;Discrim&quot;, perturb=&quot;past&quot;, discrim=&quot;toxicity&quot;, target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
 
 for i in 1:100
-    input_ids = reshape(input_[:], :, 1) |&gt; gpu
+    input_ids = reshape(input_[:], :, 1) |&gt; PPLM.gpu
     inp = input_ids[1:end-1, :]
     prev = input_ids[end:end, :]
     outputs = model(inp; output_attentions=false,
@@ -65,7 +65,7 @@ for i in 1:100
     original_logits = outputs.logits[:, end, 1]
     original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
     
-    new_past = perturb_past_discrim(model, prev, past, original_probs, args)
+    new_past = PPLM.perturb_past_discrim(model, prev, past, original_probs, args)
     output_new = model(prev; past_key_values=new_past,
                                         output_attentions=false,
                                         output_hidden_states=true,
@@ -89,4 +89,4 @@ similar issues from different different sides affected your work/responsibility 
 things you find seem quite simple, at first glance?&quot;</code></pre><h2 id="Load-Custom-Model"><a class="docs-heading-anchor" href="#Load-Custom-Model">Load Custom Model</a><a id="Load-Custom-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Load-Custom-Model" title="Permalink"></a></h2><p>You can use your own custom train Model (suppose saved at path=<code>path</code>) using the following:</p><pre><code class="language-julia">args = PPLM.pplm(method=&quot;Discrim&quot;, discrim=&quot;custom&quot;, path=path, target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
 
 PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt=&quot;Do I look like I give a&quot;)
-</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../bow/">« Bag Of Words Model</a><a class="docs-footer-nextpage" href="../discrim_train/">Discriminator Training »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 11 August 2021 13:23">Wednesday 11 August 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</code></pre><p><strong>Note</strong>: For different Discriminator, you may need to tune some hyperparameters like <code>stepsize</code>, <code>fusion_gm_scale</code> etc. to get some really interesting results. Will add more details on it later. Also note that in first iteration, it usually takes more time to evaluate the gradients but becomes fast in consecutive passes.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../bow/">« Bag Of Words Model</a><a class="docs-footer-nextpage" href="../discrim_train/">Discriminator Training »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 12 August 2021 08:00">Thursday 12 August 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
