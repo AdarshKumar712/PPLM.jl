@@ -72,8 +72,9 @@ You will get back your original sentence `This is an example of Tokenization`
 PPLM.jl can be used to generate normal (unperturbed) text with the GPT2 model, with any of the two sampling methods `top_k` and `nucleus`:
 
 To generate text, you can use the following code:
-
-
+```
+sample_normal(;primer="Fruits are", tokenizer=tokenizer, model=model, method="top_k")
+```
 Here is a Sample text generated with GPT2 using the above code:
 
 > With **Top_k sampling**, k=50, prompt = "Fruits are"
