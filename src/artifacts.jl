@@ -29,7 +29,19 @@ function get_artifact(name)
     meta = Artifacts.artifact_meta(name, ARTIFACTS_TOML)
     file_path = meta["download"][1]["url"]
     if isurl(file_path)
-        ensure_artifact_installed(name, ARTIFACTS_TOML)
+        hash = artifact_hash(name, ARTIFACTS_TOML)
+        
+        if hash==nothing || !artifact_exists(hash)
+            file_hash = create_artifact() do artifact_dir
+                tarball = download("$file_path", joinpath(artifact_dir, string(name, ".txt")))
+                global tarball_hash = bytes2hex(GitTools.blob_hash(tarball))
+            end
+
+            # register if not in artifact.toml
+            if isnothing(artifact_hash(name, ARTIFACTS_TOML))
+                bind_artifact!(ARTIFACTS_TOML, name, file_hash; download_info=[(file_path, tarball_hash)])
+            end
+        end
     else
         file_name = split(file_path, "/")[end]
         path = joinpath(@__DIR__, file_path[1:end-length(file_name)])
