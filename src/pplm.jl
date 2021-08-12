@@ -151,7 +151,7 @@ Perturb past key values `prev` based on provided Bag of Words list (as given wit
 
 Also checkout [`perturb_past_discrim`](@ref PPLM.perturb_past_discrim)
 """
-function perturb_past_bow(model, prev, past, original_probs, args)
+function perturb_past_bow(model, prev, past, original_probs, tokenizer, args)
     global device
     bow_indices, _ = PPLM.get_bow_indices(args.bow_list, tokenizer)
     _, bow_ohe = PPLM.build_bow_ohe(bow_indices, tokenizer) 
@@ -261,12 +261,6 @@ function perturb_past_discrim(model, prev, past, original_probs, args)
     kl_scale=args.fusion_kl_scale
     opt = ADAM(args.stepsize)
     
-    function bow_loss(probs)
-        loss_words = bow_all*probs
-        loss = -log(sum(loss_words))
-        loss
-    end
-    
     pert_past = deepcopy(past) |> device
     ps = params(pert_past)
     for i in 1:args.num_iterations
@@ -286,7 +280,6 @@ function perturb_past_discrim(model, prev, past, original_probs, args)
                 end
                 logits = model.lm_head(hidden)[:, end, :]
                 probs = temp_softmax(logits; t=args.temperature)
-                loss_1 = bow_loss(probs)
                 loss_2 = kl_scale * Flux.kldivergence(probs, original_probs)        # throwing error
                 loss_1 + loss_2
             end

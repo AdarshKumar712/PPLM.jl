@@ -50,12 +50,12 @@ end
 
 # function for perturbed generation
 """
-    function sample_pplm(pplm_args;tokenizer=nothing, model=nothing, prompt="I hate the customs", add_eos_start=true)
+    function sample_pplm(pplm_args;tokenizer=nothing, model=nothing, prompt="I hate the customs", sample_method="top_k", add_eos_start=true)
 
 Function for PPLM model based generation. Generate perturbed sentence using `pplm_args`, tokenizer and model (GPT2, in case not provided), starting with `prompt`. In this function the generation is based on the arguments/parameters provided in `pplm_args`, which is an instance of `pplm` struct.  
 
 """
-function sample_pplm(pplm_args;tokenizer=nothing, model=nothing, prompt="I hate the customs", add_eos_start=true)
+function sample_pplm(pplm_args;tokenizer=nothing, model=nothing, prompt="I hate the customs", sample_method="top_k", add_eos_start=true)
     if tokenizer == nothing
         if pplm_args.embed_size==1024 || pplm_args.discrim in ["sentiment", "clickbait"]
             tokenizer, model = get_gpt2_medium()
@@ -75,17 +75,15 @@ function sample_pplm(pplm_args;tokenizer=nothing, model=nothing, prompt="I hate 
     else
         input_ = tokenizer(prompt)
     end
+    args=pplm_args
     model = model |> device
-    @showprogress "Generating..." for i in 1:max_length
+    @showprogress "Generating..." for i in 1:args.max_length
         input_ids = reshape(input_[:], :, 1) |> device
-        inp = input_ids[1:end-1, :]
-        prev = input_ids[end:end, :]
-        outputs = model(inp; output_attentions=false,
+        outputs = model(input_ids; output_attentions=false,
                             output_hidden_states=true,
-                            use_cache=true);
-        past = outputs.past_key_values;
+                            use_cache=false);
         original_logits = outputs.logits[:, end, 1]
-        original_probs = temp_softmax(original_logits; t=pplm_args.temperature)
+        original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
         if pplm_args.method=="BoW"
             if pplm_args.perturb=="probs"
                 pert_probs = perturb_probs(original_probs, tokenizer, pplm_args)
@@ -95,8 +93,16 @@ function sample_pplm(pplm_args;tokenizer=nothing, model=nothing, prompt="I hate 
                 pert_logits = model.lm_head(modified_hidden)[:, end, 1]
                 pert_probs = temp_softmax(pert_logits; t=pplm_args.temperature)
             else
+                inp = input_ids[1:end-1, :]
+                prev = input_ids[end:end, :]
+                outputs = model(inp; output_attentions=false,
+                                    output_hidden_states=true,
+                                    use_cache=true);
                 past = outputs.past_key_values;
-                new_past = perturb_past_bow(model, prev, past, original_probs, pplm_args)
+                original_logits_ = outputs.logits[:, end, 1]
+                original_probs_ = temp_softmax(original_logits_; t=pplm_args.temperature)
+                past = outputs.past_key_values;
+                new_past = perturb_past_bow(model, prev, past, original_probs_, tokenizer, pplm_args)
                 output_new = model(prev; past_key_values=new_past,
                                                     output_attentions=false,
                                                     output_hidden_states=true,
@@ -111,8 +117,16 @@ function sample_pplm(pplm_args;tokenizer=nothing, model=nothing, prompt="I hate 
                 pert_logits = model.lm_head(modified_hidden)[:, end, 1]
                 pert_probs = temp_softmax(pert_logits; t=pplm_args.temperature)
             else
+                inp = input_ids[1:end-1, :]
+                prev = input_ids[end:end, :]
+                outputs = model(inp; output_attentions=false,
+                                    output_hidden_states=true,
+                                    use_cache=true);
                 past = outputs.past_key_values;
-                new_past = perturb_past_discrim(model, prev, past, original_probs, pplm_args)
+                original_logits_ = outputs.logits[:, end, 1]
+                original_probs_ = temp_softmax(original_logits_; t=pplm_args.temperature)
+                past = outputs.past_key_values;
+                new_past = perturb_past_discrim(model, prev, past, original_probs_, pplm_args)
                 output_new = model(prev; past_key_values=new_past,
                                                     output_attentions=false,
                                                     output_hidden_states=true,
@@ -123,10 +137,10 @@ function sample_pplm(pplm_args;tokenizer=nothing, model=nothing, prompt="I hate 
         end
         gm_scale=pplm_args.fusion_gm_scale
         pert_probs = Float32.((original_probs.^(1-gm_scale)).*(pert_probs.^gm_scale)) |> cpu
-        if method=="top_k"
-            new_token = top_k_sample(probs; k=args.top_k)[1] 
-        elseif method == "nucleus"
-            new_token = nucleus_sample(probs; p=args.top_p)[1]
+        if sample_method=="top_k"
+            new_token = top_k_sample(pert_probs; k=args.top_k)[1] 
+        elseif sample_method == "nucleus"
+            new_token = nucleus_sample(pert_probs; p=args.top_p)[1]
         end
         
         push!(input_, new_token)

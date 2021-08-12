@@ -22,8 +22,14 @@ Plug and Play Language Models or PPLM allows a user to flexibly plug in one or m
 
 # Installation
 
-Will be updated once registered...
 
+In order to install the PPLM package, write the following in the Julia Prompt:
+
+```julia
+] add PPLM
 ```
-Not yet regsitered
+or
+```julia
+using Pkg
+Pkg.add("PPLM")
 ```

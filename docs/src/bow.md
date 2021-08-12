@@ -9,6 +9,7 @@ Let's first initialize the package and model.
 using PPLM
 
 tokenizer, model = PPLM.get_gpt2();
+model = model |> PPLM.gpu
 ```
 
 > **Prompt**: To conclude
@@ -19,7 +20,7 @@ tokenizer, model = PPLM.get_gpt2();
 This feature only supports for Bag of Words Model. Perturbation of probability can be done similar to the given example:
 
 ```julia
-args= PPLM.pplm(perturb="probs", bow_list = ["politics"], stepsize=0.1, fusion_gm_scale=0.8f0, top_k=50)
+args= PPLM.pplm(perturb="probs", bow_list = ["politics"], stepsize=1.0, fusion_gm_scale=0.8f0, top_k=50)
 
 PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt="To conclude")
 
@@ -30,7 +31,7 @@ Another more crude way of generation could be:
 ```julia
 input_ = [tokenizer.eos_token_id; tokenizer("To conclude")]
 
-args= PPLM.pplm(perturb="probs", bow_list = ["politics"], stepsize=0.1, fusion_gm_scale=0.8f0, top_k=50)
+args= PPLM.pplm(perturb="probs", bow_list = ["politics"], stepsize=1.0, fusion_gm_scale=0.8f0, top_k=50)
 
 for i in 1:100
     input_ids = reshape(input_[:], :, 1)
@@ -39,7 +40,7 @@ for i in 1:100
                         use_cache=false);
     original_logits = outputs.logits[:, end, 1]
     original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
-    pert_probs = perturb_probs(original_probs, tokenizer, args)
+    pert_probs = PPLM.perturb_probs(original_probs, tokenizer, args)
     gm_scale = args.fusion_gm_scale
     pert_probs = Float32.((original_probs.^(1-gm_scale)).*(pert_probs.^(gm_scale)))
     new_token = PPLM.top_k_sample(pert_probs; k=args.top_k)[1]
@@ -65,7 +66,7 @@ conservatives pointed out. What they don't seem to understand is that this ideol
 Perturbation of hidden states can be done similar to the given example
 
 ```julia
-args= PPLM.pplm(perturb="hidden", bow_list = ["politics"], stepsize=0.1, fusion_gm_scale=0.8f0, top_k=50)
+args= PPLM.pplm(perturb="hidden", bow_list = ["politics"], stepsize=0.02, fusion_gm_scale=0.8f0, top_k=50)
 
 PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt="To conclude")
 
@@ -76,10 +77,10 @@ Another more crude way of generation could be:
 
 input_ = [tokenizer.eos_token_id; tokenizer("To conclude")]
 
-args= PPLM.pplm(perturb="hidden", bow_list = ["politics"], stepsize=0.1, fusion_gm_scale=0.8f0, top_k=50)
+args= PPLM.pplm(perturb="hidden", bow_list = ["politics"], stepsize=0.02, fusion_gm_scale=0.8f0, top_k=50)
 
 for i in 1:100
-    input_ids = reshape(input_[:], :, 1) |> gpu
+    input_ids = reshape(input_[:], :, 1) |> PPLM.gpu
     outputs = model(input_ids; output_attentions=false,
                         output_hidden_states=true,
                         use_cache=false);
@@ -88,7 +89,7 @@ for i in 1:100
     
     hidden = outputs.hidden_states[end]
     
-    modified_hidden = perturb_hidden_bow(model, hidden, args)
+    modified_hidden = PPLM.perturb_hidden_bow(model, hidden, args)
     pert_logits = model.lm_head(modified_hidden)[:, end, 1]
     pert_probs = PPLM.temp_softmax(pert_logits; t=args.temperature)
     
@@ -117,7 +118,7 @@ simply did not follow basic political norms, and in order not to lose faith that
 
 
 ```julia
-args= PPLM.pplm(perturb="past", bow_list = ["politics"], stepsize=0.1, fusion_gm_scale=0.8f0, top_k=50)
+args= PPLM.pplm(perturb="past", bow_list = ["politics"], stepsize=0.005, fusion_gm_scale=0.8f0, top_k=50)
 
 PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt="To conclude")
 
@@ -127,10 +128,10 @@ Another more crude way of generation could be:
 ```julia
 input_ = [tokenizer.eos_token_id; tokenizer("To conclude")]
 
-args= PPLM.pplm(perturb="past", bow_list = ["politics"], stepsize=0.1, fusion_gm_scale=0.8f0, top_k=50)
+args= PPLM.pplm(perturb="past", bow_list = ["politics"], stepsize=0.005, fusion_gm_scale=0.8f0, top_k=50)
 
 for i in 1:100
-    input_ids = reshape(input_[:], :, 1) |> gpu
+    input_ids = reshape(input_[:], :, 1) |> PPLM.gpu
     inp = input_ids[1:end-1, :]
     prev = input_ids[end:end, :]
     outputs = model(inp; output_attentions=false,
@@ -140,7 +141,7 @@ for i in 1:100
     original_logits = outputs.logits[:, end, 1]
     original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
     
-    new_past = perturb_past_bow(model, prev, past, original_probs, args)
+    new_past = PPLM.perturb_past_bow(model, prev, past, original_probs, args)
     output_new = model(prev; past_key_values=new_past,
                                         output_attentions=false,
                                         output_hidden_states=true,
@@ -168,3 +169,5 @@ communities, rather and international business people, like the Canadian governm
 when they say these, to the authorities, and then have the Canadian people deal with, and to them be more 
 involved in the process itself and their work ethics should really be to"
 ```
+
+**Note**: For different topics, you may need to tune some hyperparameters like `stepsize`, `fusion_gm_scale` etc. to get some really interesting results. Will add more details on it later. Also note that in first iteration, it usually takes more time to evaluate the gradients but becomes fast in consecutive passes.

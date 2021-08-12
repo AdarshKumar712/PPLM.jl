@@ -29,9 +29,18 @@ PPLM.jl is a `Transformers.jl` based PPLM implementation in Julia to facilitate 
 6) Discriminator Training -  Linear layer classifier on GPT2 model
 7) Some more options for Controlled generation of Text, beyond PPLM.
 
-## Status
+## Installation
 
-WIP (Not yet registered)
+In order to install the PPLM package, write the following in the Julia Prompt:
+
+```julia
+] add PPLM
+```
+or
+```julia
+using Pkg
+Pkg.add("PPLM")
+```
 
 ## RoadMap / Checkpoints
 
@@ -50,6 +59,8 @@ WIP (Not yet registered)
 For more details on the progress, checkout the [Project:PPLM](https://github.com/AdarshKumar712/PPLM.jl/projects/1)
 
 ## Example
+
+**Note**: For different topics, you may need to tune some hyperparameters like `stepsize`, `fusion_gm_scale` etc. to get some really interesting results. Also note that in first iteration, it usually takes more time to evaluate the gradients but becomes fast in consecutive passes. So may need to wait for 2-3 minutes for the first time.
 
 First let's load the package and the model:
 ```julia

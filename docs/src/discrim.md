@@ -53,7 +53,7 @@ input_ = [tokenizer.eos_token_id; tokenizer("Do I look like I give a")]
 args = PPLM.pplm(method="Discrim", perturb="hidden", discrim="toxicity", target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
 
 for i in 1:100
-    input_ids = reshape(input_[:], :, 1) |> gpu
+    input_ids = reshape(input_[:], :, 1) |> PPLM.gpu
     outputs = model(input_ids; output_attentions=false,
                         output_hidden_states=true,
                         use_cache=false);
@@ -61,7 +61,7 @@ for i in 1:100
     original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
     
     hidden = outputs.hidden_states[end]
-    modified_hidden = perturb_hidden_discrim(hidden, model, tokenizer, args)
+    modified_hidden = PPLM.perturb_hidden_discrim(hidden, model, tokenizer, args)
     pert_logits = model.lm_head(modified_hidden)[:, end, 1]
     pert_probs = PPLM.temp_softmax(pert_logits; t=args.temperature)
     
@@ -92,7 +92,7 @@ on many other topics"
 Perturbation of hidden states can be done similar to the given example
 
 ```julia
-args = PPLM.pplm(method="Discrim", perturb="past", discrim="toxicity", target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
+args = PPLM.pplm(method="Discrim", perturb="past", discrim="toxicity", target_class_id=1, stepsize=0.004, fusion_kl_scale=0.05);
 
 PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt="Do I look like I give a")
 
@@ -106,7 +106,7 @@ input_ = [tokenizer.eos_token_id; tokenizer("Do I look like I give a")]
 args = PPLM.pplm(method="Discrim", perturb="past", discrim="toxicity", target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
 
 for i in 1:100
-    input_ids = reshape(input_[:], :, 1) |> gpu
+    input_ids = reshape(input_[:], :, 1) |> PPLM.gpu
     inp = input_ids[1:end-1, :]
     prev = input_ids[end:end, :]
     outputs = model(inp; output_attentions=false,
@@ -116,7 +116,7 @@ for i in 1:100
     original_logits = outputs.logits[:, end, 1]
     original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
     
-    new_past = perturb_past_discrim(model, prev, past, original_probs, args)
+    new_past = PPLM.perturb_past_discrim(model, prev, past, original_probs, args)
     output_new = model(prev; past_key_values=new_past,
                                         output_attentions=false,
                                         output_hidden_states=true,
@@ -156,3 +156,5 @@ args = PPLM.pplm(method="Discrim", discrim="custom", path=path, target_class_id=
 PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt="Do I look like I give a")
 
 ```
+
+**Note**: For different Discriminator, you may need to tune some hyperparameters like `stepsize`, `fusion_gm_scale` etc. to get some really interesting results. Will add more details on it later. Also note that in first iteration, it usually takes more time to evaluate the gradients but becomes fast in consecutive passes.
