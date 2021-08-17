@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Discriminator Model · PPLM.jl</title><link rel="canonical" href="https://adarshkumar712.github.io/PPLM.jl/discrim/"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">PPLM.jl</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../how/">How does it work?</a></li><li><a class="tocitem" href="../gpt2/">GPT2: Tokenization and Generation</a></li><li><a class="tocitem" href="../bow/">Bag Of Words Model</a></li><li class="is-active"><a class="tocitem" href>Discriminator Model</a><ul class="internal"><li><a class="tocitem" href="#Perturb-Hidden-State"><span>Perturb Hidden State</span></a></li><li><a class="tocitem" href="#Perturb-Past-Key-Values"><span>Perturb Past Key Values</span></a></li><li><a class="tocitem" href="#Load-Custom-Model"><span>Load Custom Model</span></a></li></ul></li><li><a class="tocitem" href="../discrim_train/">Discriminator Training</a></li><li><a class="tocitem" href="../api/">API</a></li><li><a class="tocitem" href="../contact/">Contact Info</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Discriminator Model</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Discriminator Model</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/adarshkumar712/PPLM.jl/blob/master/docs/src/discrim.md#" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Discriminator-Model"><a class="docs-heading-anchor" href="#Discriminator-Model">Discriminator Model</a><a id="Discriminator-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Discriminator-Model" title="Permalink"></a></h1><p>In the BoW Model, we first train a Linear Discriminator over the Large Language Model called as ClassifierHead, to classify wanted vs unwanted class. This ClassifierHead is then used to calculate gradients against the crossentropy loss for p(a/x) where a is the desired attribute. </p><p>In PPLM.jl, the ClassifierHead is defined as a struct:</p><pre><code class="language-julia">struct ClassifierHead
+    linear_layer::Dense
+    embed_size::Int
+    class_size::Int
+end</code></pre><p>You can load a ClassifierHead with any of the following Methods:</p><pre><code class="language-none">#Method 1: load a pretrained model
+classifier, config_metadata = PPLM.ClassifierHead(;load_from_pretrained=true, discrim=&quot;toxicity&quot;)    
+
+#Method 2: load a custom trained mode
+classifier, config_metadata = PPLM.ClassifierHead(;load_from_pretrained=true, path=&quot;./pretrained/custom_model.bson&quot;) 
+
+#Method 3: Intiate a random Classifier Layer
+classifier, _ = PPLM.ClassifierHead(;load_from_pretrained=true, discrim=&quot;toxicity&quot;) 
+</code></pre><p>Let&#39;s delve into an example of PPLM based generation with Discriminator Model.</p><p>First, let&#39;s load the package and model:</p><pre><code class="language-none">using PPLM
+
+tokenizer, model = PPLM.get_gpt2();</code></pre><blockquote><p><strong>Prompt</strong>: Do I look like I give a</p></blockquote><h2 id="Perturb-Hidden-State"><a class="docs-heading-anchor" href="#Perturb-Hidden-State">Perturb Hidden State</a><a id="Perturb-Hidden-State-1"></a><a class="docs-heading-anchor-permalink" href="#Perturb-Hidden-State" title="Permalink"></a></h2><p>Perturbation of hidden states can be done similar to the given example</p><pre><code class="language-julia">args = PPLM.pplm(method=&quot;Discrim&quot;, perturb=&quot;hidden&quot;, discrim=&quot;toxicity&quot;, target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
+
+PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt=&quot;Do I look like I give a&quot;)
+</code></pre><p>Another more crude way of generation could be:</p><pre><code class="language-julia">
+input_ = [tokenizer.eos_token_id; tokenizer(&quot;Do I look like I give a&quot;)]
+
+args = PPLM.pplm(method=&quot;Discrim&quot;, perturb=&quot;hidden&quot;, discrim=&quot;toxicity&quot;, target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
+
+for i in 1:100
+    input_ids = reshape(input_[:], :, 1) |&gt; PPLM.gpu
+    outputs = model(input_ids; output_attentions=false,
+                        output_hidden_states=true,
+                        use_cache=false);
+    original_logits = outputs.logits[:, end, 1]
+    original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
+    
+    hidden = outputs.hidden_states[end]
+    modified_hidden = PPLM.perturb_hidden_discrim(hidden, model, tokenizer, args)
+    pert_logits = model.lm_head(modified_hidden)[:, end, 1]
+    pert_probs = PPLM.temp_softmax(pert_logits; t=args.temperature)
+    
+    gm_scale = args.fusion_gm_scale
+    pert_probs = Float32.((original_probs.^(1-gm_scale)).*(pert_probs.^(gm_scale))) |&gt; cpu
+    new_token = PPLM.top_k_sample(pert_probs; k=args.top_k)[1]
+    push!(input_, new_token)
+end
+
+text = detokenize(tokenizer, input_)
+</code></pre><p>Sample generation:</p><pre><code class="language-julia">&quot;Do I look like I give a damn? I want to be a nice person who treats my colleagues and even friends 
+like people.\n\nFor one thing, it takes time for me and others to really consider and think about 
+your value. In the past, I often felt uncomfortable working with people who thought my interests, 
+opinions and interests were different, and didn&#39;t have the emotional and spiritual value to interact 
+with them. I didn&#39;t feel like they wanted me to speak to their views. So I started getting involved 
+on many other topics&quot;</code></pre><h2 id="Perturb-Past-Key-Values"><a class="docs-heading-anchor" href="#Perturb-Past-Key-Values">Perturb Past Key Values</a><a id="Perturb-Past-Key-Values-1"></a><a class="docs-heading-anchor-permalink" href="#Perturb-Past-Key-Values" title="Permalink"></a></h2><p>Perturbation of hidden states can be done similar to the given example</p><pre><code class="language-julia">args = PPLM.pplm(method=&quot;Discrim&quot;, perturb=&quot;past&quot;, discrim=&quot;toxicity&quot;, target_class_id=1, stepsize=0.004, fusion_kl_scale=0.05);
+
+PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt=&quot;Do I look like I give a&quot;)
+</code></pre><p>Another more crude way of generation could be:</p><pre><code class="language-julia">
+input_ = [tokenizer.eos_token_id; tokenizer(&quot;Do I look like I give a&quot;)]
+
+args = PPLM.pplm(method=&quot;Discrim&quot;, perturb=&quot;past&quot;, discrim=&quot;toxicity&quot;, target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
+
+for i in 1:100
+    input_ids = reshape(input_[:], :, 1) |&gt; PPLM.gpu
+    inp = input_ids[1:end-1, :]
+    prev = input_ids[end:end, :]
+    outputs = model(inp; output_attentions=false,
+                        output_hidden_states=true,
+                        use_cache=true);
+    past = outputs.past_key_values;
+    original_logits = outputs.logits[:, end, 1]
+    original_probs = PPLM.temp_softmax(original_logits; t=args.temperature)
+    
+    new_past = PPLM.perturb_past_discrim(model, prev, past, original_probs, args)
+    output_new = model(prev; past_key_values=new_past,
+                                        output_attentions=false,
+                                        output_hidden_states=true,
+                                        use_cache=true);    
+    pert_logits = output_new.logits[:, end, 1]
+    pert_probs = PPLM.temp_softmax(pert_logits; t=args.temperature)
+    #print(sum(pert_probs.-original_probs))
+    
+    gm_scale = args.fusion_gm_scale
+    pert_probs = Float32.((original_probs.^(1-gm_scale)).*(pert_probs.^(gm_scale))) |&gt; cpu
+    new_token = PPLM.top_k_sample(pert_probs; k=args.top_k)[1]
+    push!(input_, new_token)
+end
+
+text = detokenize(tokenizer, input_)
+</code></pre><p>Sample generation:</p><pre><code class="language-julia">&quot;Do I look like I give a proper treatment to these people? We&#39;re seeing real examples in all the 
+things that they have done as well. There is going to be a discussion on there with the state of 
+what steps we should be taking to address all cases of people in the community, and then what we 
+are going to do going forward that has not a national interest interest. Is your experience with 
+similar issues from different different sides affected your work/responsibility of not doing that 
+things you find seem quite simple, at first glance?&quot;</code></pre><h2 id="Load-Custom-Model"><a class="docs-heading-anchor" href="#Load-Custom-Model">Load Custom Model</a><a id="Load-Custom-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Load-Custom-Model" title="Permalink"></a></h2><p>You can use your own custom train Model (suppose saved at path=<code>path</code>) using the following:</p><pre><code class="language-julia">args = PPLM.pplm(method=&quot;Discrim&quot;, discrim=&quot;custom&quot;, path=path, target_class_id=1, stepsize=0.008, fusion_kl_scale=0.05);
+
+PPLM.sample_pplm(args; tokenizer=tokenizer, model=model, prompt=&quot;Do I look like I give a&quot;)
+</code></pre><p><strong>Note</strong>: For different Discriminator, you may need to tune some hyperparameters like <code>stepsize</code>, <code>fusion_gm_scale</code> etc. to get some really interesting results. Will add more details on it later. Also note that in first iteration, it usually takes more time to evaluate the gradients but becomes fast in consecutive passes.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../bow/">« Bag Of Words Model</a><a class="docs-footer-nextpage" href="../discrim_train/">Discriminator Training »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 17 August 2021 18:10">Tuesday 17 August 2021</span>. Using Julia version 1.6.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
