@@ -25,7 +25,7 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 [compat]
 BSON = "0.3"
 BytePairEncoding = "0.2"
-CSV = "0.8"
+CSV = "0.8, 0.9"
 CUDA = "3"
 DataDeps = "0.7"
 DataFrames = "1"
